@@ -837,7 +837,7 @@ func splitTagRegex(tag string) *config.TagRegex {
 // validate validates if the current configuration is good for the agent to start with.
 func validate(c *config.AgentConfig, core corecompcfg.Component) error {
 	if len(c.Endpoints) == 0 || c.Endpoints[0].APIKey == "" {
-		return config.ErrMissingAPIKey
+		return fmt.Errorf("%w. %s", config.ErrMissingAPIKey, utils.APIKeyMissingHelpMessage(core))
 	}
 	if c.DDAgentBin == "" {
 		return errors.New("agent binary path not set")

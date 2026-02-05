@@ -22,6 +22,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/core/config"
 	log "github.com/DataDog/datadog-agent/comp/core/log/def"
 	secrets "github.com/DataDog/datadog-agent/comp/core/secrets/def"
+	"github.com/DataDog/datadog-agent/pkg/config/utils"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/util/scrubber"
 )
@@ -76,6 +77,7 @@ var (
 
 var trace *httptrace.ClientTrace
 var traceOnce sync.Once
+var apiKeyInvalidHelpOnce sync.Once
 
 // GetClientTrace is an httptrace.ClientTrace instance that traces the events within HTTP client requests.
 func GetClientTrace(log log.Component) *httptrace.ClientTrace {
@@ -432,6 +434,9 @@ func (t *HTTPTransaction) internalProcess(ctx context.Context, config config.Com
 		return resp.StatusCode, body, nil
 	} else if resp.StatusCode == 403 {
 		log.Errorf("API Key invalid (403 response), dropping transaction for %s", logURL)
+		apiKeyInvalidHelpOnce.Do(func() {
+			log.Errorf("%s", utils.APIKeyInvalidHelpMessageForEndpoint(config, t.Endpoint.Route))
+		})
 
 		// Trigger throttled secret refresh based on secret_refresh_on_api_key_failure_interval on API key error
 		if secrets != nil {

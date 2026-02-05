@@ -21,6 +21,7 @@ import (
 
 	"github.com/DataDog/datadog-agent/comp/logs/agent/config"
 	pkgconfigmodel "github.com/DataDog/datadog-agent/pkg/config/model"
+	"github.com/DataDog/datadog-agent/pkg/config/utils"
 	"github.com/DataDog/datadog-agent/pkg/logs/client"
 	"github.com/DataDog/datadog-agent/pkg/logs/message"
 	"github.com/DataDog/datadog-agent/pkg/logs/metrics"
@@ -77,6 +78,7 @@ type Destination struct {
 	protocol            config.IntakeProtocol
 	origin              config.IntakeOrigin
 	isMRF               bool
+	cfg                 pkgconfigmodel.Reader
 
 	// Concurrency
 	workerPool *workerPool
@@ -177,6 +179,7 @@ func newDestination(endpoint config.Endpoint,
 		pipelineMonitor:     pipelineMonitor,
 		utilization:         pipelineMonitor.MakeUtilizationMonitor(destMeta.MonitorTag(), instanceID),
 		instanceID:          instanceID,
+		cfg:                 cfg,
 	}
 }
 
@@ -388,7 +391,7 @@ func (d *Destination) unconditionalSend(payload *message.Payload) (err error) {
 	metrics.TlmDestinationHTTPRespByStatusAndURL.Inc(strconv.Itoa(resp.StatusCode), d.url)
 
 	if resp.StatusCode >= http.StatusBadRequest {
-		log.Warnf("failed to post http payload. code=%d, url=%s, EvP track type=%s, content type=%s, EvP category=%s, origin=%s, response=%s", resp.StatusCode, d.url, d.endpoint.TrackType, d.contentType, d.destMeta.EvpCategory(), d.origin, string(response))
+		log.Errorf("failed to post http payload. code=%d, url=%s, EvP track type=%s, content type=%s, EvP category=%s, origin=%s, response=%s", resp.StatusCode, d.url, d.endpoint.TrackType, d.contentType, d.destMeta.EvpCategory(), d.origin, string(response))
 	}
 	if resp.StatusCode == http.StatusBadRequest ||
 		resp.StatusCode == http.StatusUnauthorized ||
@@ -396,6 +399,9 @@ func (d *Destination) unconditionalSend(payload *message.Payload) (err error) {
 		resp.StatusCode == http.StatusRequestEntityTooLarge {
 		// the logs-agent is likely to be misconfigured,
 		// the URL or the API key may be wrong.
+		if resp.StatusCode == http.StatusForbidden && d.cfg != nil {
+			log.Errorf("%s", utils.APIKeyInvalidHelpMessageForEndpoint(d.cfg, d.url))
+		}
 		tlmDropped.Inc()
 		return errClient
 	} else if resp.StatusCode > http.StatusBadRequest {

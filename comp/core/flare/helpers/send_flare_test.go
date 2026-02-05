@@ -121,7 +121,7 @@ func TestAnalyzeResponse(t *testing.T) {
 			Header:     http.Header{"Content-Type": []string{"application/json; charset=UTF-8"}},
 			Body:       io.NopCloser(bytes.NewBuffer([]byte("{\"case_id\": 1234}"))),
 		}
-		resstr, reserr := analyzeResponse(r, "abcdef")
+		resstr, reserr := analyzeResponse(r, "abcdef", "")
 		require.NoError(t, reserr)
 		require.Equal(t,
 			"Your logs were successfully uploaded. For future reference, your internal case id is 1234",
@@ -134,7 +134,7 @@ func TestAnalyzeResponse(t *testing.T) {
 			Header:     http.Header{"Content-Type": []string{"application/json; charset=UTF-8"}},
 			Body:       io.NopCloser(bytes.NewBuffer([]byte("{\"case_id\": 1234, \"error\": \"uhoh\", \"request_uuid\": \"1dd9a912-843f-4987-9007-b915edb3d047\"}"))),
 		}
-		resstr, reserr := analyzeResponse(r, "abcdef")
+		resstr, reserr := analyzeResponse(r, "abcdef", "")
 		require.Equal(t, errors.New("uhoh"), reserr)
 		require.Equal(t,
 			"An error occurred while uploading the flare: uhoh. Please contact support by email and facilitate the request uuid: `1dd9a912-843f-4987-9007-b915edb3d047`.",
@@ -147,7 +147,7 @@ func TestAnalyzeResponse(t *testing.T) {
 			Header:     http.Header{"Content-Type": []string{"application/json; charset=UTF-8"}},
 			Body:       io.NopCloser(bytes.NewBuffer([]byte("{\"case_id\": 1234, \"error\": \"uhoh\"}"))),
 		}
-		resstr, reserr := analyzeResponse(r, "abcdef")
+		resstr, reserr := analyzeResponse(r, "abcdef", "")
 		require.Equal(t, errors.New("uhoh"), reserr)
 		require.Equal(t,
 			"An error occurred while uploading the flare: uhoh. Please contact support by email.",
@@ -160,7 +160,7 @@ func TestAnalyzeResponse(t *testing.T) {
 			Header:     http.Header{"Content-Type": []string{"application/json; charset=UTF-8"}},
 			Body:       io.NopCloser(bytes.NewBuffer([]byte("thats-not-json"))),
 		}
-		resstr, reserr := analyzeResponse(r, "abcdef")
+		resstr, reserr := analyzeResponse(r, "abcdef", "")
 		require.Equal(t,
 			errors.New("invalid character 'h' in literal true (expecting 'r')\n"+
 				"Server returned:\n"+
@@ -183,7 +183,7 @@ func TestAnalyzeResponse(t *testing.T) {
 			Header:     http.Header{"Content-Type": []string{"application/json"}},
 			Body:       io.NopCloser(bytes.NewBuffer([]byte(resp))),
 		}
-		resstr, reserr := analyzeResponse(r, "abcdef")
+		resstr, reserr := analyzeResponse(r, "abcdef", "")
 		require.Equal(t,
 			errors.New("invalid character 'u' looking for beginning of value\n"+
 				"Server returned:\n"+
@@ -199,7 +199,7 @@ func TestAnalyzeResponse(t *testing.T) {
 			StatusCode: 200,
 			Body:       io.NopCloser(bytes.NewBuffer([]byte("{\"json\": true}"))),
 		}
-		resstr, reserr := analyzeResponse(r, "abcdef")
+		resstr, reserr := analyzeResponse(r, "abcdef", "")
 		require.Equal(t,
 			errors.New("Server returned a 200 but with no content-type header\n"+
 				"Server returned:\n"+
@@ -216,7 +216,7 @@ func TestAnalyzeResponse(t *testing.T) {
 			Header:     http.Header{"Content-Type": []string{"text/plain"}},
 			Body:       io.NopCloser(bytes.NewBuffer([]byte("{\"json\": true}"))),
 		}
-		resstr, reserr := analyzeResponse(r, "abcdef")
+		resstr, reserr := analyzeResponse(r, "abcdef", "")
 		require.Equal(t,
 			errors.New("Server returned a 200 but with an unknown content-type text/plain\n"+
 				"Server returned:\n"+
@@ -233,7 +233,7 @@ func TestAnalyzeResponse(t *testing.T) {
 			Status:     "Bad Gateway",
 			Body:       io.NopCloser(bytes.NewBuffer([]byte("<html>.."))),
 		}
-		resstr, reserr := analyzeResponse(r, "abcdef")
+		resstr, reserr := analyzeResponse(r, "abcdef", "")
 		require.Equal(t,
 			errors.New("HTTP 502 Bad Gateway\n"+
 				"Server returned:\n"+
@@ -248,7 +248,7 @@ func TestAnalyzeResponse(t *testing.T) {
 		r := &http.Response{
 			StatusCode: 403,
 		}
-		resstr, reserr := analyzeResponse(r, "")
+		resstr, reserr := analyzeResponse(r, "", "")
 		require.Equal(t,
 			errors.New("HTTP 403 Forbidden: API key is missing"),
 			reserr)
@@ -259,7 +259,7 @@ func TestAnalyzeResponse(t *testing.T) {
 		r := &http.Response{
 			StatusCode: 403,
 		}
-		resstr, reserr := analyzeResponse(r, "abcd123abcd12344abcd1234")
+		resstr, reserr := analyzeResponse(r, "abcd123abcd12344abcd1234", "")
 		require.Equal(t,
 			errors.New("HTTP 403 Forbidden: Make sure your API key is valid. API Key ending with: d1234"),
 			reserr)

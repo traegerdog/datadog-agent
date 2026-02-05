@@ -156,7 +156,7 @@ func readAndPostFlareFile(archivePath, caseID, email, hostname, url string, sour
 	return resp, nil
 }
 
-func analyzeResponse(r *http.Response, apiKey string) (string, error) {
+func analyzeResponse(r *http.Response, apiKey string, apiKeyInvalidHelp string) (string, error) {
 	if r.StatusCode == http.StatusForbidden {
 		var errStr string
 
@@ -167,6 +167,9 @@ func analyzeResponse(r *http.Response, apiKey string) (string, error) {
 				apiKey = apiKey[len(apiKey)-5:]
 			}
 			errStr = fmt.Sprintf("Make sure your API key is valid. API Key ending with: %v", apiKey)
+		}
+		if apiKeyInvalidHelp != "" {
+			errStr += "; " + apiKeyInvalidHelp
 		}
 
 		return "", fmt.Errorf("HTTP 403 Forbidden: %s", errStr)
@@ -292,7 +295,7 @@ func SendTo(cfg pkgconfigmodel.Reader, archivePath, caseID, email, apiKey, url s
 
 		// Success case - analyze the response
 		defer r.Body.Close()
-		return analyzeResponse(r, apiKey)
+		return analyzeResponse(r, apiKey, configUtils.APIKeyInvalidHelpMessageForEndpoint(cfg, "flare submit (/support/flare)"))
 	}
 	return "", fmt.Errorf("failed to send flare after 3 attempts: %w", lastErr)
 }

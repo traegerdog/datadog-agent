@@ -20,6 +20,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/forwarder/defaultforwarder/endpoints"
 	"github.com/DataDog/datadog-agent/comp/forwarder/defaultforwarder/resolver"
 	"github.com/DataDog/datadog-agent/comp/forwarder/defaultforwarder/transaction"
+	"github.com/DataDog/datadog-agent/pkg/config/utils"
 	"github.com/DataDog/datadog-agent/pkg/status/health"
 	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
 	"github.com/DataDog/datadog-agent/pkg/util/scrubber"
@@ -270,6 +271,7 @@ func (fh *forwarderHealth) validateAPIKey(apiKey, domain string) (bool, error) {
 		return true, nil
 	} else if resp.StatusCode == 403 {
 		fh.setAPIKeyStatus(apiKey, domain, &apiKeyInvalid)
+		fh.log.Errorf("API key validation failed (403). %s", utils.APIKeyInvalidHelpMessageForEndpoint(fh.config, "/api/v1/validate"))
 		return false, nil
 	}
 

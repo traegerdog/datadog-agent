@@ -7,6 +7,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html"
 	"net/http"
@@ -70,7 +71,7 @@ func NewConfig(deps Dependencies) (Component, error) {
 
 	if err != nil {
 		// Allow main Agent to start with missing API key
-		if !(err == traceconfig.ErrMissingAPIKey && !deps.Params.FailIfAPIKeyMissing) {
+		if !(errors.Is(err, traceconfig.ErrMissingAPIKey) && !deps.Params.FailIfAPIKeyMissing) {
 			return nil, err
 		}
 	}

@@ -19,6 +19,8 @@ import (
 	"github.com/DataDog/datadog-agent/comp/forwarder/defaultforwarder"
 	"github.com/DataDog/datadog-agent/comp/process/types"
 	pkgconfigmodel "github.com/DataDog/datadog-agent/pkg/config/model"
+	pkgconfigsetup "github.com/DataDog/datadog-agent/pkg/config/setup"
+	"github.com/DataDog/datadog-agent/pkg/config/utils"
 	"github.com/DataDog/datadog-agent/pkg/process/checks"
 	"github.com/DataDog/datadog-agent/pkg/process/status"
 	"github.com/DataDog/datadog-agent/pkg/process/util/api"
@@ -499,6 +501,9 @@ func readResponseStatuses(checkName string, responses <-chan defaultforwarder.Re
 
 		if response.StatusCode >= 300 {
 			log.Errorf("[%s] Invalid response from %s: %d -> %v", checkName, response.Domain, response.StatusCode, response.Err)
+			if response.StatusCode == 403 {
+				log.Errorf("%s", utils.APIKeyInvalidHelpMessageForEndpoint(pkgconfigsetup.Datadog(), "process agent submission to "+response.Domain+" (check: "+checkName+")"))
+			}
 			submissionErrors++
 			continue
 		}
