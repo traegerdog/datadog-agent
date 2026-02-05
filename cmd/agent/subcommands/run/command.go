@@ -601,6 +601,7 @@ func startAgent(
 	} else {
 		log.Infof("Starting Datadog Agent v%v", version.AgentVersion)
 	}
+	log.Info("Local dev build - minimal test change (you can remove this line)")
 
 	if err := coredump.Setup(cfg); err != nil {
 		log.Warnf("Can't setup core dumps: %v, core dumps might not be available after a crash", err)
