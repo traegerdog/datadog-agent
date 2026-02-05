@@ -1,24 +1,32 @@
----
 schema-version: v1
 rulesets:
+  - csharp-best-practices
+  - csharp-code-style
+  - csharp-security
+  - csharp-inclusive
   - docker-best-practices
   - go-best-practices
   - go-security
-  - github-actions
-  - sit-ci-best-practices:
-    only:
-      - ".github/workflows"
+  - java-best-practices
+  - java-code-style
+  - java-security
+  - javascript-best-practices
+  - javascript-browser-security
+  - javascript-code-style
+  - javascript-common-security
+  - javascript-express
+  - javascript-inclusive
+  - javascript-node-security
+  - jsx-react
+  - python-best-practices
+  - python-code-style
+  - python-django
+  - python-flask
+  - python-inclusive
+  - python-pandas
   - python-security
-  - python-best-practices:
-    rules:
-      nested-blocks:
-        ignore:
-          - "**"
-  - python-code-style:
-    rules:
-      max-function-lines:
-        ignore:
-          - "**/*"
-      max-class-lines:
-        ignore:
-          - "**"
+  - ruby-code-style
+  - ruby-security
+  - ruby-best-practices
+  - rails-best-practices
+  - github-actions
